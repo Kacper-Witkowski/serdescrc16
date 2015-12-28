@@ -2,7 +2,7 @@
 -- Company: PWr
 -- Engineer: Kacper Witkowski
 	
--- Module Name:    Serializer
+-- Module Name:    Deserializer
 -- Project Name: 	 Nadajnik i odbiornik szeregowy z kontrolą poprawności przesyłu CRC16
 ----------------------------------------------------------------------------------
 library IEEE;
