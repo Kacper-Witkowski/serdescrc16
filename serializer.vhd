@@ -75,6 +75,8 @@ begin
 	if clk'event and clk = '1' then
 		if crc_running = '1' then
 			newCRC <= nextCRC16(d(7), newCRC); -- obliczanie crc
+		elsif pckg_cnt = "10010" and cnt = "111" then
+			newCRC <= (others => '0');
 		end if;
 	end if;
 end process crc_calc;
@@ -89,7 +91,6 @@ begin
 					 d <= newCRC(14 downto 7); -- wyslij pierwszą połowę crc
 				elsif pckg_cnt = "10010" then
 					 d <= newCRC(7 downto 0);					 -- wyślij drugą połowę crc
-					 --newCRC <= (others => '0');
 				else
 					 d <= parallel_in; -- wyślij to co na wejściu
 				end if;
