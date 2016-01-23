@@ -22,7 +22,6 @@ architecture Behavioral of deserializer is
 
 signal cnt : std_logic_vector(2 downto 0):= (others => '0');
 signal d : std_logic_vector(7 downto 0):= (others => '0');
-signal so : std_logic_vector(2 downto 0) := (others => '0');
 signal transmission_running : std_logic := '0'; -- czy transmisja działa? generowane po sygnale 0x7e
 signal crc_running : std_logic := '0'; -- crc, liczone bo odebraniu 0x7e
 signal pckg_cnt : std_logic_vector(4 downto 0) := (others => '0'); --licznik odebranych bajtów
@@ -37,8 +36,9 @@ begin
     elsif (clk'event and clk = '1') then
         if transmission_running = '1' then
 				cnt <= cnt + "01";
-				if cnt = "111" and pckg_cnt = "10010" then
+				if cnt = "111" and pckg_cnt = "10001" then
 					pckg_cnt <= "00000";
+					cnt <= "000";
 				elsif cnt = "111" then
 					pckg_cnt <= pckg_cnt + "01";
 				end if;
@@ -57,7 +57,6 @@ begin
 			transmission_running <= '1';
 		elsif pckg_cnt = "10001" and cnt = "111" then
 			crc_running <= '0';
-		elsif cnt = "111" and pckg_cnt = "10010" then
 			transmission_running <= '0';
 		end if;
 	end if;
@@ -84,23 +83,19 @@ begin
     end if;    
 end process sipo;
 
-crcso : process(reset, clk)
+crcso : process(reset, clk, d)
 begin
 	if reset = '0' then
-		so <= (others => '0');
+		serial_out <= '0';
 	elsif (clk'event and clk = '1') then
-		if pckg_cnt = "10010" and cnt = "000" then
+		if pckg_cnt = "10001" and cnt = "111" then
 			if newCRC = "0000000000000000" then
-				so <= "111";
-			else
-				so <= "101";
+				serial_out <= '1';
 			end if;
 		else
-			so(2 downto 0) <= so(1 downto 0) & '0';
+			serial_out <= '0';
 		end if;
 	end if;
 end process crcso;
-
-serial_out <= so(2);
 
 end Behavioral;
