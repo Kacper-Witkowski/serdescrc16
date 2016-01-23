@@ -23,8 +23,6 @@ architecture Behavioral of serializer is
 
 signal cnt : std_logic_vector(2 downto 0):= "000"; -- licznik
 signal d : std_logic_vector(7 downto 0) := (others => '0'); -- rejestr danych
-signal si : std_logic_vector(2 downto 0) := (others => '0');
-signal wfr : std_logic := '0'; -- oczekuj na odpowiedz
 signal transmission_running : std_logic := '0'; -- czy transmisja działa? generowane po sygnale 0x7e
 signal crc_running : std_logic := '0'; -- po przesłaniu całego pakietu kontrolnego, działa crc
 signal pckg_cnt : std_logic_vector(4 downto 0) := (others => '0'); --licznik wysłanych pakietów
@@ -48,16 +46,14 @@ begin
 	 end if;        
 end process counter;
 
-transmission_control : process(reset, clk)
+transmission_control : process(reset, clk, d)
 begin
 	if reset='0' then
 		transmission_running <= '0';
 		crc_running <= '0';
-		wfr <= '0';
 	elsif clk'event and clk = '1' then
-		if d = "01111110" then -- wystartuj dopiero po 0x7e
+		if d = "01111110" or (pckg_cnt = "00000" and serial_in = '1') then -- wystartuj dopiero po 0x7e
 			transmission_running <= '1';
-			wfr <= '0';
 		end if;
 		if transmission_running = '1' and cnt = "111" and pckg_cnt = "00000" then
 			crc_running <= '1'; -- zacznij liczyć crc po wysłaniu nagłówka
@@ -65,7 +61,6 @@ begin
 			crc_running <= '0'; -- skończ liczyć crc po 16 bajtach
 		elsif (cnt = "111" and pckg_cnt = "10010") then -- zatrzymaj się i wyzeruj crc po wysłaniu wszystkiego
 			transmission_running <= '0';
-			wfr <= '1';
 		end if;
 	end if;
 end process transmission_control;
@@ -86,7 +81,7 @@ begin
     if reset='0' then
         d <= (others => '0');
     elsif (clk'event and clk = '1') then
-        if (cnt = "000" and ( cnt = "000" xor wfr = '1' )) or si = "111" then -- zareaguj dopiero na 0x7e lub potwierdzenie zgodnosci crc
+        if cnt = "000" then  -- zareaguj dopiero na 0x7e lub potwierdzenie zgodnosci crc
 				if pckg_cnt = "10001" then
 					 d <= newCRC(14 downto 7); -- wyslij pierwszą połowę crc
 				elsif pckg_cnt = "10010" then
@@ -97,7 +92,6 @@ begin
         else
             d(7 downto 0) <= d(6 downto 0) & '0'; -- rejestr wysyłanych danych
         end if;
-		  si(2 downto 0) <= si(1 downto 0) & serial_in; -- kontrola wejścia szeregowego od deserializera
     end if;
 end process piso;
 
