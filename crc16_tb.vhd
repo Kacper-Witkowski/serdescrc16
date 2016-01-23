@@ -34,7 +34,7 @@ ARCHITECTURE behavior OF serdes_tb IS
    signal wy : std_logic_vector(7 downto 0);
 
    -- Clock period definitions
-   constant clk_period : time := 6 ns;
+   constant clk_period : time := 5 ns;
  
 BEGIN
  
@@ -97,7 +97,15 @@ BEGIN
 		we <= "01101011";
       wait for clk_period*10;
 		we <= "01111110";
-		wait for clk_period*40;
+		wait for clk_period*20;
+		we <= "11101011";
+      wait for clk_period*8;
+		we <= "10101011";
+      wait for clk_period*8;
+		we <= "11100011";
+      wait for clk_period*8;
+      we <= "10001010";
+      wait for clk_period*80;
 		
       assert false severity failure;
    end process;
